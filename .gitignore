@@ -1,0 +1,22 @@
+# macOS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Python / Node
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+
+# Copyrighted papers and coursework documents
+*.pdf
+*.docx
+*.pages
+
+# Password datasets: NEVER commit
+data/raw/
+data/breach/
+
+tmp/
