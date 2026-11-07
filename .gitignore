@@ -10,9 +10,8 @@ __pycache__/
 venv/
 node_modules/
 
-# Copyrighted papers and coursework documents
+# Copyrighted papers
 *.pdf
-*.docx
 *.pages
 
 # Password datasets: NEVER commit
