@@ -1,0 +1,44 @@
+{
+  "inputs": {
+    "ro_words": [
+      "data/raw/leipzig_ro/ron_news_2022_100K.tar.gz",
+      "data/raw/dexonline/dex-database.sql.gz"
+    ],
+    "ro_inflected": [
+      "data/raw/leipzig_ro/ron_news_2022_100K.tar.gz",
+      "data/raw/dexonline/dex-database.sql.gz"
+    ],
+    "ro_phrases": [
+      "data/raw/leipzig_ro/ron_news_2022_100K.tar.gz"
+    ],
+    "ro_places": [
+      "data/raw/geonames_ro/RO.zip"
+    ],
+    "en_words": [
+      "data/raw/bnc_freq/all.num.gz"
+    ],
+    "en_names": [
+      "data/raw/en_names/baby-names.csv"
+    ],
+    "en_phrases": [
+      "data/raw/leipzig_en/eng_news_2023_100K.tar.gz"
+    ],
+    "ro_names": [
+      "data/raw/wikipedia_ro"
+    ],
+    "ro_cultural": [
+      "data/raw/wikipedia_ro"
+    ]
+  },
+  "sizes": {
+    "ro_words": 25752,
+    "ro_inflected": 39611,
+    "ro_phrases": 12000,
+    "ro_places": 9957,
+    "en_words": 330717,
+    "en_names": 6782,
+    "en_phrases": 12000,
+    "ro_names": 109,
+    "ro_cultural": 45
+  }
+}
