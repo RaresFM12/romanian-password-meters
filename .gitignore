@@ -14,8 +14,11 @@ node_modules/
 *.pdf
 *.pages
 
-# Password datasets: NEVER commit
+# Password datasets and anything derived from a breach: NEVER commit
 data/raw/
 data/breach/
+data/reference/*real*
+results/private/
 
 tmp/
+*.egg-info/

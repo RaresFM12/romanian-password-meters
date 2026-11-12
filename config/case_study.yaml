@@ -1,0 +1,109 @@
+# Case-study configuration (reduced scale). The full study uses config/full.yaml,
+# which is this file with the sizes of the "full" column. No number is hard-coded
+# elsewhere: code reads it from here.
+scale: case_study
+
+seeds:
+  main: 20261111
+  extra: [1, 2]          # robustness datasets
+  real_sample: 7         # 10% sample of the validation share V
+
+# ---- dataset sizes (guide Section 2) -------------------------------------
+categories:
+  RO-word:        200
+  RO-word-num:    200
+  RO-word-year:   200
+  RO-name-num:    200
+  RO-name-sym:    150
+  RO-place:       150
+  RO-phrase:      200
+  RO-leet:        150
+  RO-translit:    100
+  RO-inflected:   100
+  RO-cultural:    100
+  RO-passphrase:  100
+  EN-word-num:    200
+  EN-name-num:    200
+  EN-phrase:      200
+  RANDOM:         600    # not 60: at 200, T7 cannot pass (0.99^200 = 0.134 > 0.05/12)
+families:
+  total: 100             # 60 with s/t-comma, 20 with a-circumflex only, 20 with a-breve/i only
+  with_st: 60
+  with_circumflex: 20
+  with_breve_i: 20
+  min_strings: 460
+
+twins:                   # pair_id links the i-th RO and EN password
+  - [RO-word-num, EN-word-num]
+  - [RO-name-num, EN-name-num]
+  - [RO-phrase,   EN-phrase]
+
+open_class:              # pooled for T5; excludes RO-place, RO-cultural and the families
+  [RO-word, RO-word-num, RO-word-year, RO-name-num, RO-name-sym,
+   RO-phrase, RO-leet, RO-translit, RO-inflected, RO-passphrase]
+
+# ---- generator parameters (guide C05) ------------------------------------
+generator:
+  rank_bands: [[1, 100], [101, 1000], [1001, 10000], [10001, 50000]]
+  case_style: {lower: 0.50, initial_upper: 0.40, all_upper: 0.10}
+  year_range: [1950, 2026]
+  digit_suffix:
+    lengths: [1, 2, 3, 4]
+    common_fraction: 0.5
+    common: ["1","2","7","12","13","21","22","23","69","77","99",
+             "00","01","007","100","111","123","321","666","1234"]
+  symbols: ["!","@","#","$","%","&","*","?",".","_"]
+  optional_part_prob: 0.5          # digits / symbol each appear with this probability
+  diacritic_shares: {ascii: 0.80, correct: 0.10, cedilla: 0.05, digraph: 0.05}
+  leet:
+    base_mix: {word: 0.3334, name: 0.3333, phrase: 0.3333}
+    substitutions: {a: ["@","4"], e: ["3"], i: ["1","!"], o: ["0"], s: ["$","5"], t: ["7"]}
+    per_char_prob: 0.5
+    min_substitutions: 1
+  passphrase:
+    word_counts: [3, 4]
+    joiners: ["", " "]
+  random:
+    charset_lo: 0x20
+    charset_hi: 0x7E
+    length_range: [8, 16]
+
+# ---- reference / attackers (guide Section 4; student supplies the data) ---
+reference:
+  attackers_main: [A-EN, A-RO, A-ALL, A-JTR, A-PCFG]
+  budgets:   {A-EN: 1.0e+10, A-RO: 1.0e+10, A-ALL: 1.0e+10, A-JTR: 1.0e+10, A-PCFG: 1.0e+9}
+  cut_variant: 1.0e+9               # "all attackers cut at 1e9" robustness variant
+  smoke_budget: 1.0e+8              # small run for the repeatability check
+
+# ---- scoring / thresholds (guide Section 4) ------------------------------
+scoring:
+  D: 10000
+  score_thresholds: [1005, 1000005, 100000005, 10000000005]   # 1e3+5, 1e6+5, 1e8+5, 1e10+5
+  weak_threshold: 1.0e+6
+  weak_threshold_robust: [1.0e+4, 1.0e+8]
+  min_weak_for_test: 100           # a DOR test below this is "undecided"
+  D_variants: [1000, 100, 10]
+
+policy:
+  normal: {min_len: 8, min_classes: 3}
+  strict: {min_len: 12, min_classes: 4}
+
+# ---- breach split (guide C09) --------------------------------------------
+breach:
+  split: {meter: 0.40, attacker: 0.30, validation: 0.30}
+  precision_sample: 300
+  reuse_groups: [[1000, null], [100, 999], [10, 99], [2, 9], [1, 1]]
+
+# ---- statistics (guide C15) ----------------------------------------------
+stats:
+  bootstrap_resamples: 10000
+  holm_alpha: 0.05
+  tests_are: illustrative          # case-study scale; confirmatory only at full scale
+
+# ---- meters (guide C06, C10, C11) ----------------------------------------
+meters:
+  resource_groups: [norm, digraph, clean_words, names, places, cultural, leaked, matchers]
+  czech:
+    D_main: 10000
+    D_secondary: 1000
+    bundle_size_target_kb: 900
