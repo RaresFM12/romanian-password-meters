@@ -1,0 +1,90 @@
+# External data sources (guide C02). Every URL was verified to resolve
+# (HTTP 200/206) on the access date below before being recorded here.
+# `fetch_sources.py` downloads the `auto: true` sources into data/raw/<name>/ and
+# writes their sha256 to data/sources.lock.yaml.
+#
+# mutable:  the remote file changes over time (daily dump, live API), so its
+#           checksum is recorded for the record but not enforced.
+# large:    big download; fetched only with `--include-large` (or `make data FULL=1`).
+# auto:false: cannot be fetched as a single file (API query, or bot-blocked);
+#           handled by a later step or supplied by hand, as noted.
+
+access_date: "2026-11-12"
+
+sources:
+  # ---- generator inputs ------------------------------------------------
+  geonames_ro:
+    url: https://download.geonames.org/export/dump/RO.zip
+    purpose: generator localities (RO-place)
+    licence: CC BY 4.0
+    mutable: true          # GeoNames regenerates the dump daily
+    auto: true
+
+  leipzig_ro:
+    url: https://downloads.wortschatz-leipzig.de/corpora/ron_news_2022_100K.tar.gz
+    purpose: generator RO word frequencies and phrases (and the CoRoLa ranking fallback)
+    licence: CC BY-NC 4.0 (Leipzig Corpora Collection)
+    mutable: false
+    auto: true
+
+  leipzig_en:
+    url: https://downloads.wortschatz-leipzig.de/corpora/eng_news_2023_100K.tar.gz
+    purpose: generator EN phrases
+    licence: CC BY-NC 4.0 (Leipzig Corpora Collection)
+    mutable: false
+    auto: true
+
+  bnc_freq:
+    url: https://www.kilgarriff.co.uk/BNClists/all.num.gz
+    purpose: generator EN words (BNC frequency list, Kilgarriff)
+    licence: academic use (Kilgarriff BNC lists)
+    mutable: false
+    auto: true
+
+  en_names:
+    url: https://raw.githubusercontent.com/hadley/data-baby-names/master/baby-names.csv
+    purpose: generator EN names (SSA top-1000 per year, Wickham mirror)
+    licence: public domain (US SSA data)
+    mutable: true          # tracks a git branch; pin a commit for a frozen run
+    auto: true
+    note: >
+      The direct SSA endpoint (ssa.gov/oact/babynames/names.zip) returns 403 to
+      non-browser clients, so this SSA-derived mirror is used instead.
+
+  dexonline:
+    url: https://dexonline.ro/static/download/dex-database.sql.gz
+    purpose: generator/attacker RO lexemes and inflected forms (RO-inflected)
+    licence: GPL (database), per dexonline
+    mutable: false
+    large: true            # ~380 MB; fetched on demand
+    auto: true
+
+  wikipedia_ro:
+    url: https://ro.wikipedia.org/w/api.php
+    purpose: generator RO names and cultural terms (MediaWiki category queries)
+    licence: CC BY-SA 4.0
+    mutable: true
+    auto: false            # queried in C04/C08, not a single-file download
+
+  # ---- meter inputs ----------------------------------------------------
+  siruta:
+    url: http://data.gov.ro/storage/f/2013-11-01T11%3A49%3A59.808Z/siruta.csv
+    purpose: meter localities (INS SIRUTA register)
+    licence: open government data (data.gov.ro)
+    mutable: false
+    auto: false            # data.gov.ro blocks non-browser clients (503); download
+    note: >                # it by hand into data/raw/siruta/siruta.csv (needed in C08,
+      the URL is verified and opens in a browser; data.gov.ro returns 503 to
+      non-browser clients, so fetch it manually into data/raw/siruta/siruta.csv.
+
+  ro_name_stats:
+    url: null
+    purpose: meter first-name frequencies (official statistics)
+    licence: unknown
+    auto: false            # no verified public file found; optional, see deviations.md
+
+  corola:
+    url: null
+    purpose: RO word frequency ranking
+    licence: CoRoLa terms
+    auto: false            # no clean public download; Leipzig RO used instead (deviations.md)

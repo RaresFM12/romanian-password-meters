@@ -20,5 +20,18 @@ data/breach/
 data/reference/*real*
 results/private/
 
+# Regenerable data (rebuild: make data + make generate). manifest.json is kept.
+data/lexicon/generator/*.tsv
+data/lexicon/meter/*.tsv
+data/lexicon/meter/*.txt
+data/synthetic/*.csv
+
 tmp/
 *.egg-info/
+
+# Regenerable results (rebuild: make all). Final results committed by the student if wanted.
+results/tables/*.csv
+results/figures/*.png
+results/figures/*.pdf
+results/meters/
+results/run_manifest.json

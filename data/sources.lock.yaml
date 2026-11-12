@@ -1,0 +1,38 @@
+access_date: '2026-11-12'
+sources:
+  bnc_freq:
+    bytes: 4717762
+    fetched_at: '2026-11-12'
+    mutable: false
+    sha256: 2e42f5d9007f7cd644d880b792dacb172ef8b64104141c375e0cb4d7a340e362
+    url: https://www.kilgarriff.co.uk/BNClists/all.num.gz
+  dexonline:
+    bytes: 380777465
+    fetched_at: '2026-11-12'
+    mutable: false
+    sha256: e51be0311f4b65826c7d68b2dbc9a483645b865723726325b4a7951df1e2f69c
+    url: https://dexonline.ro/static/download/dex-database.sql.gz
+  en_names:
+    bytes: 7447879
+    fetched_at: '2026-11-12'
+    mutable: true
+    sha256: 1259523fa76e5c18151a4c7612b854b22605d07127c596126940e2941ba15d3c
+    url: https://raw.githubusercontent.com/hadley/data-baby-names/master/baby-names.csv
+  geonames_ro:
+    bytes: 2004446
+    fetched_at: '2026-11-12'
+    mutable: true
+    sha256: be50059a9fbde9f2fa612a34dcd91f422cfd8e4f76b78b4d13456d68d4be4a88
+    url: https://download.geonames.org/export/dump/RO.zip
+  leipzig_en:
+    bytes: 28950373
+    fetched_at: '2026-11-12'
+    mutable: false
+    sha256: 8e65ed5b9c96687d293374335c14dfb9db4c150877bcc208a21bcb2f86b43484
+    url: https://downloads.wortschatz-leipzig.de/corpora/eng_news_2023_100K.tar.gz
+  leipzig_ro:
+    bytes: 26512755
+    fetched_at: '2026-11-12'
+    mutable: false
+    sha256: 93bb93d1cfc772290685c6a787ddcd76f9320d7a3c6ef6fec9772208ef7dca39
+    url: https://downloads.wortschatz-leipzig.de/corpora/ron_news_2022_100K.tar.gz
