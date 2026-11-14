@@ -1,0 +1,32 @@
+{
+  "inputs": {
+    "ro_common_clean": [
+      "npm:@zxcvbn-ts/language-ro@4.1.2:commonWords-ro"
+    ],
+    "ro_names_ext": [
+      "npm:@zxcvbn-ts/language-ro@4.1.2:firstnames-ro",
+      "src/ropw/ro_handbuilt.py:DIMINUTIVES"
+    ],
+    "ro_calendar": [
+      "src/ropw/ro_handbuilt.py:CALENDAR"
+    ],
+    "ro_cultural": [
+      "src/ropw/ro_handbuilt.py:CULTURAL"
+    ],
+    "ro_expressions": [
+      "src/ropw/ro_handbuilt.py:EXPRESSIONS"
+    ],
+    "ro_places": [
+      "src/ropw/ro_handbuilt.py:COUNTIES",
+      "data/raw/siruta/siruta.csv"
+    ]
+  },
+  "sizes": {
+    "ro_common_clean": 48515,
+    "ro_names_ext": 876,
+    "ro_calendar": 16,
+    "ro_cultural": 44,
+    "ro_expressions": 20,
+    "ro_places": 11775
+  }
+}
