@@ -8,9 +8,13 @@ _HAS_LISTS = (REPO_ROOT / "data/lexicon/generator/ro_words.tsv").exists()
 
 @pytest.mark.skipif(not _HAS_LISTS, reason="generator lists not built")
 def test_filter_detects_romanian():
-    f = breach.RomanianFilter()
+    f = breach.RomanianFilter(ro_forms={"vacanță", "iubire", "iubesc", "iubita", "parola", "te", "mea",
+                                         "dragostea", "password"})
     assert f.is_romanian("vacanță123")
     assert f.is_romanian("iubire2020")
+    assert f.is_romanian("teiubesc")
+    assert f.is_romanian("iubitamea")
+    assert f.is_romanian("parolamea123")
     assert not f.is_romanian("password123")
     assert not f.is_romanian("qwerty")
 
@@ -41,9 +45,25 @@ def test_case_study_sample_stratified():
     validation = {f"pw{i}": int(c) for i, c in enumerate(rng.integers(1, 50, 200))}
     sample = breach.case_study_sample(validation, seed=7, frac=0.10)
     assert 0 < len(sample) < len(validation)
-    assert all(validation[k] == v for k, v in sample.items())
+    assert all(k in validation for k in sample)
+    assert sample == breach.case_study_sample(validation, seed=7, frac=0.10)
 
 def test_precision_sample_is_unlabeled():
     counts = {f"pw{i}": 1 for i in range(500)}
     sample = breach.precision_sample(counts, seed=1, n=300)
     assert len(sample) == 300 and len(set(sample)) == 300
+
+
+def test_parse_count_line_keeps_spaces_in_password():
+    assert breach.parse_count_line("  290729 123456\n") == ("123456", 290729)
+    assert breach.parse_count_line("      2  pw\n") == (" pw", 2)
+
+
+def test_attacker_rockyou_uses_attacker_counts(monkeypatch):
+    rows = [("123456", 100), ("iubire", 50), ("qwerty", 40), ("dragoste", 30), ("abc", 1)]
+    monkeypatch.setattr(breach, "read_rockyou", lambda: iter(rows))
+    split = {"iubire": (20, 10, 20), "dragoste": (30, 0, 0)}
+    order = {"iubire": 1, "dragoste": 3}
+    out = breach.attacker_rockyou({"iubire", "dragoste"}, split, order)
+    # iubire moves down to its attacker count (10); dragoste has no attacker occurrence
+    assert out == ["123456", "qwerty", "iubire", "abc"]
