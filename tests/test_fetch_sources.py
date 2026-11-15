@@ -19,7 +19,7 @@ def test_auto_sources_have_verified_urls():
     auto = [n for n, m in reg["sources"].items() if m.get("auto")]
 
     assert set(auto) == {"geonames_ro", "leipzig_ro", "leipzig_en", "bnc_freq",
-                         "en_names", "dexonline"}
+                         "en_names", "dexonline", "freq_es", "freq_pt"}
 
 def test_sha256(tmp_path):
     p = tmp_path / "x"

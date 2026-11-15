@@ -1,6 +1,7 @@
 import argparse
 import csv
 import gzip
+import hashlib
 import json
 import re
 import tarfile
@@ -11,7 +12,7 @@ import zipfile
 from collections import Counter
 from pathlib import Path
 from .config import REPO_ROOT, load_config
-from .normalize import nfc
+from .normalize import nfc, to_comma
 
 GEN = REPO_ROOT / "data/lexicon/generator"
 RAW = REPO_ROOT / "data/raw"
@@ -26,7 +27,7 @@ MANIFEST = {}
 
 
 def clean(tok):
-    return nfc(tok).translate(INVISIBLE).strip().lower()
+    return to_comma(nfc(tok).translate(INVISIBLE).strip().lower())
 
 
 def is_word(tok, letters, min_len=2):
@@ -70,6 +71,31 @@ def leipzig_words(tar_path, letters):
     return _rank(counter)
 
 
+EDGE = re.compile(r"^(\W*)(.*?)(\W*)$")
+
+
+# a number, a one-letter word or punctuation ends a phrase
+def word_runs(text, token_re):
+    runs = []
+    run = []
+    for raw in text.split():
+        lead, core, trail = EDGE.match(raw).groups()
+        if lead and run:
+            runs.append(run)
+            run = []
+        if len(core) >= 2 and token_re.fullmatch(core):
+            run.append(core)
+        elif run:
+            runs.append(run)
+            run = []
+        if trail and run:
+            runs.append(run)
+            run = []
+    if run:
+        runs.append(run)
+    return runs
+
+
 def leipzig_ngrams(tar_path, token_re, max_sentences, top_per_len):
     member = _leipzig_member(tar_path, "-sentences.txt")
     by_len = {2: Counter(), 3: Counter(), 4: Counter()}
@@ -78,15 +104,18 @@ def leipzig_ngrams(tar_path, token_re, max_sentences, top_per_len):
             if i >= max_sentences:
                 break
             text = raw.decode("utf-8").split("\t", 1)[-1].lower()
-            toks = [t for t in token_re.findall(nfc(text)) if len(t) >= 2]
-            for n in (2, 3, 4):
-                for j in range(len(toks) - n + 1):
-                    by_len[n][" ".join(toks[j:j + n])] += 1
+            for toks in word_runs(to_comma(nfc(text)), token_re):
+                for n in (2, 3, 4):
+                    for j in range(len(toks) - n + 1):
+                        by_len[n][" ".join(toks[j:j + n])] += 1
     out = []
     for n in (2, 3, 4):
         kept = [(p, c) for p, c in by_len[n].items() if c >= 2]
         out.extend(sorted(kept, key=lambda kv: (-kv[1], kv[0]))[:top_per_len])
     return sorted(out, key=lambda kv: (-kv[1], kv[0]))
+
+
+EXONYMS = {"bucharest"}
 
 
 def geonames_places(zip_path):
@@ -101,7 +130,7 @@ def geonames_places(zip_path):
                 if fclass != "P" and fcode != "ADM1":
                     continue
                 name = clean(col[1])
-                if not is_word(name, RO_LETTERS):
+                if not is_word(name, RO_LETTERS) or name in EXONYMS:
                     continue
                 best[name] = max(best.get(name, 0), int(pop or 0))
     return _rank(best)
@@ -211,17 +240,37 @@ def dexonline_sets(dump_path, keep):
     return lemmas, inflected
 
 
+def dexonline_all_forms(dump_path):
+    forms = set()
+    for table in ("Lexeme", "InflectedForm"):
+        for values in _dump_table_values(dump_path, table):
+            for form in tuple_field(values, 2):
+                if form:
+                    forms.add(clean(form))
+    return forms
+
+
 WIKI_API = "https://ro.wikipedia.org/w/api.php"
 PAREN = re.compile(r"\s*\(.*?\)\s*$")
+
+
+# Wikipedia answers are cached so a rebuild gives the same lists
+WIKI_CACHE = RAW / "wikipedia_ro"
 
 
 def _wiki_get(params):
     full = dict(params)
     full["format"] = "json"
-    url = WIKI_API + "?" + urllib.parse.urlencode(full)
+    url = WIKI_API + "?" + urllib.parse.urlencode(sorted(full.items()))
+    cache = WIKI_CACHE / (hashlib.sha1(url.encode("utf-8")).hexdigest() + ".json")
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
     req = urllib.request.Request(url, headers={"User-Agent": "ropw-research/1.0"})
     with urllib.request.urlopen(req, timeout=40) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        text = resp.read().decode("utf-8")
+    WIKI_CACHE.mkdir(parents=True, exist_ok=True)
+    cache.write_text(text, encoding="utf-8")
+    return json.loads(text)
 
 
 def wiki_category_titles(category, cmtype="page"):
@@ -242,12 +291,37 @@ def wiki_category_titles(category, cmtype="page"):
     return titles
 
 
-def _clean_title(title):
+CLUB_PREFIXES = {"fc", "cs", "acs", "afc", "csm", "csf", "as", "ca", "club", "clubul",
+                 "atletic", "fk", "fcm", "fcv", "fcu", "acf", "sc", "cso", "acsm", "css",
+                 "ac", "cf", "sport", "sportiv"}
+
+
+def _clean_title(title, skip=()):
     title = PAREN.sub("", title).split(":")[-1].strip()
-    parts = title.split()
-    if parts:
-        return clean(parts[0])
+    for part in title.split():
+        tok = clean(part)
+        if tok and tok not in skip:
+            return tok
     return ""
+
+
+def wiki_page_links(page):
+    titles = []
+    cont = {}
+    while True:
+        params = {"action": "query", "prop": "links", "titles": page,
+                  "plnamespace": "0", "pllimit": "500"}
+        params.update(cont)
+        data = _wiki_get(params)
+        for pg in data.get("query", {}).get("pages", {}).values():
+            for link in pg.get("links", []):
+                titles.append(link["title"])
+        if "continue" in data:
+            cont = data["continue"]
+            time.sleep(0.2)
+        else:
+            break
+    return titles
 
 
 def _rank_by_corpus(names, freq):
@@ -257,10 +331,11 @@ def _rank_by_corpus(names, freq):
 
 def build_wikipedia_lists(freq):
     sizes = {}
-    name_titles = []
+    name_titles = wiki_page_links("Listă de prenume românești")
     for cat in ("Prenume masculine românești", "Prenume feminine românești",
                 "Prenume românești"):
         name_titles += wiki_category_titles(cat)
+    name_titles = [t for t in name_titles if not t.startswith("Listă")]
     names = {_clean_title(t) for t in name_titles}
     names.discard("")
     sizes["ro_names"] = write_tsv("ro_names", _rank_by_corpus(names, freq),
@@ -269,8 +344,8 @@ def build_wikipedia_lists(freq):
     for cat in ("Cluburi de fotbal din România",
                 "Cluburi participante în campionatul național de fotbal al României"):
         club_titles += wiki_category_titles(cat)
-    clubs = {_clean_title(t) for t in club_titles}
-    clubs.discard("")
+    clubs = {_clean_title(t, skip=CLUB_PREFIXES) for t in club_titles}
+    clubs = {c for c in clubs if len(c) >= 3}
     sizes["ro_cultural"] = write_tsv("ro_cultural", _rank_by_corpus(clubs, freq),
                                      [RAW / "wikipedia_ro"])
     return sizes
@@ -310,10 +385,7 @@ def build_all(cfg, wikipedia=True):
 
     if wikipedia:
         freq = dict(corpus)
-        try:
-            sizes.update(build_wikipedia_lists(freq))
-        except Exception as exc:
-            print("wikipedia step skipped:", exc)
+        sizes.update(build_wikipedia_lists(freq))
 
     (GEN / "manifest.json").write_text(
         json.dumps({"inputs": MANIFEST, "sizes": sizes}, indent=2) + "\n", encoding="utf-8")

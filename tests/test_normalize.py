@@ -1,6 +1,4 @@
-"""C03: normalisation reproduces Table 4 of the design exactly."""
 from ropw import normalize as nz
-
 
 def test_fetita_family():
     w = "fetiță"
@@ -9,7 +7,6 @@ def test_fetita_family():
     assert nz.to_digraph(w) == "fetitza"
     assert len(nz.nfd(w)) == 8
 
-
 def test_paine_family():
     w = "pâine"
     assert nz.to_ascii(w) == "paine"
@@ -17,19 +14,16 @@ def test_paine_family():
     assert nz.to_pre1993_ascii(w) == "piine"
     assert len(nz.nfd(w)) == 6
 
-
 def test_roman_keeps_circumflex():
     assert nz.to_pre1993("român") == "român"
     assert nz.to_pre1993("românesc") == "românesc"
     assert nz.to_pre1993("România") == "România"
-    # a non-family word with â still changes
-    assert nz.to_pre1993("când") == "cînd"
 
+    assert nz.to_pre1993("când") == "cînd"
 
 def test_nfc_nfd_roundtrip():
     for w in ["fetiță", "pâine", "mâncând", "București", "șșțțââîî", "Ana are mere"]:
         assert nz.nfc(nz.nfd(w)) == nz.nfc(w)
-
 
 def test_fold_preserves_length_and_indices():
     for w in ["fetiță", "pâine", "Șișești", "ȚĂRĂ", "mânând", "abc123!"]:
@@ -37,10 +31,8 @@ def test_fold_preserves_length_and_indices():
         assert len(folded) == len(nz.nfc(w)), w
         assert folded.isascii(), w
 
-
 def test_fold_merges_both_encodings():
     assert nz.fold("fetiță") == nz.fold("fetiţă") == "fetita"
-
 
 def test_export_tables(tmp_path):
     import json

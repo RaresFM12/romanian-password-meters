@@ -81,21 +81,22 @@ def _draw_case(rng, cfg):
     return "all_upper"
 
 
-def _draw_spelling(rng, word):
+def _draw_spelling(rng, word, cfg):
     if not has_diac(word):
         return "none"
-    r = rng.random()
+    # cedilla and sh/tz need ș or ț; otherwise the other shares are rescaled
+    shares = cfg["generator"]["diacritic_shares"]
     if has_st(word):
-        if r < 0.80:
-            return "ascii"
-        if r < 0.90:
-            return "correct"
-        if r < 0.95:
-            return "cedilla"
-        return "digraph"
-    if r < 8 / 9:
-        return "ascii"
-    return "correct"
+        options = ["ascii", "correct", "cedilla", "digraph"]
+    else:
+        options = ["ascii", "correct"]
+    total = sum(shares[o] for o in options)
+    r = rng.random() * total
+    for o in options:
+        if r < shares[o]:
+            return o
+        r -= shares[o]
+    return options[-1]
 
 
 def _draw_year(rng, cfg):
@@ -108,7 +109,8 @@ def _draw_digits(rng, cfg):
     if rng.random() < g["common_fraction"]:
         common = g["common"]
         return str(common[int(rng.integers(0, len(common)))])
-    length = int(rng.integers(1, 5))
+    lengths = g["lengths"]
+    length = int(lengths[int(rng.integers(0, len(lengths)))])
     return "".join(str(int(rng.integers(0, 10))) for _ in range(length))
 
 
@@ -145,6 +147,11 @@ def _leetify(cased, rng, cfg):
     return "".join(out)
 
 
+# twins use the same rank range, even when one list is shorter
+def _shared_band(a, b):
+    return (a[0], min(a[1], b[1]))
+
+
 def _row(**kw):
     row = {c: "" for c in COLUMNS}
     row.update(kw)
@@ -176,7 +183,7 @@ class Generator:
             item, rank, bi = self._sample_banded(sl)
             style = _draw_case(self.rng, self.cfg)
             if language == "ro":
-                spelling = _draw_spelling(self.rng, item)
+                spelling = _draw_spelling(self.rng, item, self.cfg)
             else:
                 spelling = "none"
             core = apply_case(apply_spelling(item, spelling), style)
@@ -206,15 +213,16 @@ class Generator:
             ro_bands = ro.usable_bands(self.bands)
             en_bands = en.usable_bands(self.bands)
             bi = int(self.rng.integers(0, min(len(ro_bands), len(en_bands))))
-            ro_item, ro_rank = ro.sample(self.rng, ro_bands[bi])
-            en_item, en_rank = en.sample(self.rng, en_bands[bi])
+            band = _shared_band(ro_bands[bi], en_bands[bi])
+            ro_item, ro_rank = ro.sample(self.rng, band)
+            en_item, en_rank = en.sample(self.rng, band)
             style = _draw_case(self.rng, self.cfg)
             if name and self.rng.random() < 0.5:
                 suffix = self._suffix("year")
             else:
                 suffix = self._suffix("digits")
             pid = ro_cat + "~" + en_cat + "-" + str(i).zfill(5)
-            ro_spell = _draw_spelling(self.rng, ro_item)
+            ro_spell = _draw_spelling(self.rng, ro_item, self.cfg)
             self.rows.append(_row(
                 id=self._id(ro_cat),
                 password=apply_case(apply_spelling(ro_item, ro_spell), style) + suffix,
@@ -235,16 +243,19 @@ class Generator:
             ro_bands = ro_sl.usable_bands(self.bands)
             en_bands = en_sl.usable_bands(self.bands)
             bi = int(self.rng.integers(0, min(len(ro_bands), len(en_bands))))
-            ro_item, ro_rank = ro_sl.sample(self.rng, ro_bands[bi])
-            en_item, en_rank = en_sl.sample(self.rng, en_bands[bi])
+            band = _shared_band(ro_bands[bi], en_bands[bi])
+            ro_item, ro_rank = ro_sl.sample(self.rng, band)
+            en_item, en_rank = en_sl.sample(self.rng, band)
             style = _draw_case(self.rng, self.cfg)
             suffix = _optional_suffix(self.rng, self.cfg)
+            ro_spell = _draw_spelling(self.rng, ro_item, self.cfg)
+            ro_words = apply_spelling(ro_item, ro_spell).split()
             pid = "RO-phrase~EN-phrase-" + str(i).zfill(5)
             self.rows.append(_row(
                 id=self._id("RO-phrase"),
-                password=apply_phrase_case(ro_item.split(), style) + suffix,
+                password=apply_phrase_case(ro_words, style) + suffix,
                 category="RO-phrase", language="ro", base=ro_item, base_rank=ro_rank,
-                band=bi, case_style=style, suffix=suffix, spelling="none", pair_id=pid))
+                band=bi, case_style=style, suffix=suffix, spelling=ro_spell, pair_id=pid))
             self.rows.append(_row(
                 id=self._id("EN-phrase"),
                 password=apply_phrase_case(en_item.split(), style) + suffix,
@@ -253,30 +264,35 @@ class Generator:
 
     def _passphrase(self, n):
         words = self.s["ro_words"]
+        counts = self.cfg["generator"]["passphrase"]["word_counts"]
+        joiners = self.cfg["generator"]["passphrase"]["joiners"]
         for _ in range(n):
-            k = 3 if self.rng.random() < 0.5 else 4
+            k = int(counts[int(self.rng.integers(0, len(counts)))])
             picks = [self._sample_banded(words)[0] for _ in range(k)]
-            joiner = " " if self.rng.random() < 0.5 else ""
-            pw = joiner.join(w.lower() for w in picks)
+            joiner = joiners[int(self.rng.integers(0, len(joiners)))]
+            base = " ".join(picks)
+            spelling = _draw_spelling(self.rng, base, self.cfg)
+            pw = joiner.join(apply_spelling(base, spelling).lower().split())
             self.rows.append(_row(
                 id=self._id("RO-passphrase"), password=pw, category="RO-passphrase",
-                language="ro", base=joiner.join(picks), base_rank=-1, band="",
-                case_style="lower", suffix="", spelling="none"))
+                language="ro", base=base, base_rank=-1, band="",
+                case_style="lower", suffix="", spelling=spelling))
 
     def _leet(self, n):
         pools = {"word": self.s["ro_words"], "name": self.s["ro_names"]}
+        mix = self.cfg["generator"]["leet"]["base_mix"]
         for _ in range(n):
-            r = self.rng.random()
-            if r < 1 / 3:
+            r = self.rng.random() * (mix["word"] + mix["name"] + mix["phrase"])
+            if r < mix["word"]:
                 kind = "word"
-            elif r < 2 / 3:
+            elif r < mix["word"] + mix["name"]:
                 kind = "name"
             else:
                 kind = "phrase"
             if kind == "phrase":
                 item, rank, bi = self._sample_banded(self.s["ro_phrases_flat"])
                 style = _draw_case(self.rng, self.cfg)
-                cased = apply_phrase_case(item.split(), style)
+                cased = apply_phrase_case(to_ascii(item).split(), style)
             else:
                 item, rank, bi = self._sample_banded(pools[kind])
                 style = _draw_case(self.rng, self.cfg)
@@ -307,7 +323,7 @@ class Generator:
         for _ in range(n):
             item, rank, bi = self._sample_banded(sl)
             style = _draw_case(self.rng, self.cfg)
-            spelling = _draw_spelling(self.rng, item)
+            spelling = _draw_spelling(self.rng, item, self.cfg)
             suffix = _optional_suffix(self.rng, self.cfg)
             pw = apply_case(apply_spelling(item, spelling), style) + suffix
             self.rows.append(_row(
@@ -329,24 +345,49 @@ class Generator:
 
     def _families(self):
         fam = self.cfg["families"]
-        words = self.s["ro_words"]
-        st = words.filter(lambda w: has_st(w)).items[:fam["with_st"]]
-        circ = words.filter(
-            lambda w: has_circ(w) and not has_st(w) and not _is_roman_family(w)
-        ).items[:fam["with_circumflex"]]
-        brevi = words.filter(
-            lambda w: has_brevi(w) and not has_st(w) and not has_circ(w)
-        ).items[:fam["with_breve_i"]]
-        if (len(st) < fam["with_st"] or len(circ) < fam["with_circumflex"]
-                or len(brevi) < fam["with_breve_i"]):
-            raise ValueError("ro_words lacks enough diacritic words for the families")
+        places = {fold(w).lower() for w in self.s["ro_places"].items}
+
+        def usable(w):
+            return len(w) >= 4 and fold(w).lower() not in places
+
+        words = self.s["ro_words"].filter(usable)
+        pools = [
+            (words.filter(has_st), fam["with_st"]),
+            (words.filter(lambda w: has_circ(w) and not has_st(w) and not _is_roman_family(w)),
+             fam["with_circumflex"]),
+            (words.filter(lambda w: has_brevi(w) and not has_st(w) and not has_circ(w)),
+             fam["with_breve_i"]),
+        ]
+        used = set()
+        chosen = []
+        for pool, n in pools:
+            if pool.size < n:
+                raise ValueError("ro_words lacks enough diacritic words for the families")
+            picked = 0
+            tries = 0
+            while picked < n:
+                tries += 1
+                if tries > 100 * n:
+                    raise ValueError("cannot draw enough distinct family words")
+                w, _, _ = self._sample_banded(pool)
+                if fold(w).lower() in used:
+                    continue
+                used.add(fold(w).lower())
+                chosen.append(w)
+                picked += 1
+
         plans = []
-        for w in st:
-            plans.append((w, ["correct", "cedilla", "ascii", "digraph", "decomposed"]))
-        for w in circ:
-            plans.append((w, ["correct", "ascii", "pre1993", "pre1993_ascii", "decomposed"]))
-        for w in brevi:
-            plans.append((w, ["correct", "ascii", "decomposed"]))
+        for w in chosen:
+            spellings = ["correct"]
+            if has_st(w):
+                spellings.append("cedilla")
+            spellings.append("ascii")
+            if has_st(w):
+                spellings.append("digraph")
+            if to_pre1993(w) != nfc(w):
+                spellings += ["pre1993", "pre1993_ascii"]
+            spellings.append("decomposed")
+            plans.append((w, spellings))
         for fi, (word, spellings) in enumerate(plans):
             fid = "fam-" + str(fi).zfill(4)
             for sp in spellings:

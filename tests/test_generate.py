@@ -121,3 +121,29 @@ def test_write_targets_is_nfc_unique(df, tmp_path):
     lines = out.read_text(encoding="utf-8").splitlines()
     assert len(lines) == len(set(lines))
     assert "Extrapwd1" in lines
+
+
+def test_phrases_use_the_spelling_shares(df):
+    from ropw.generate import has_diac
+    for cat in ("RO-phrase", "RO-passphrase"):
+        rows = df[df["category"] == cat]
+        for base, sp in zip(rows["base"], rows["spelling"]):
+            assert (sp == "none") == (not has_diac(base))
+
+
+def test_phrase_spelling_is_applied():
+    from ropw.generate import apply_spelling, apply_phrase_case
+    words = apply_spelling("te iubesc pâine", "ascii").split()
+    assert apply_phrase_case(words, "initial_upper") == "TeIubescPaine"
+
+
+def test_no_cedilla_in_correct_spelling(df):
+    correct = df[df["spelling"] == "correct"]["password"]
+    assert not correct.str.contains("[şţŞŢ]").any()
+
+
+def test_twins_share_rank_range(df):
+    ro = df[df["category"] == "RO-name-num"].reset_index(drop=True)
+    en = df[df["category"] == "EN-name-num"].reset_index(drop=True)
+    assert (ro["pair_id"] == en["pair_id"]).all()
+    assert (ro["band"] == en["band"]).all()

@@ -31,14 +31,14 @@
     ]
   },
   "sizes": {
-    "ro_words": 25752,
-    "ro_inflected": 39611,
+    "ro_words": 26064,
+    "ro_inflected": 40442,
     "ro_phrases": 12000,
-    "ro_places": 9957,
+    "ro_places": 9474,
     "en_words": 330717,
     "en_names": 6782,
     "en_phrases": 12000,
-    "ro_names": 109,
-    "ro_cultural": 45
+    "ro_names": 1033,
+    "ro_cultural": 87
   }
 }
