@@ -40,3 +40,57 @@ def test_ro_cz_improves_on_cultural():
     cz = run_bridge("M-ZX-RO-CZ", [("w", "Steaua1986")])["w"]["guesses"]
     pkg = run_bridge("M-ZX-RO-PKG", [("w", "Steaua1986")])["w"]["guesses"]
     assert cz < pkg
+
+
+# zxcvbn-czech build_frequency_lists.py, written out literally
+def _reference_filter(lists):
+    import collections
+    freq_lists = {}
+    for name, toks in lists.items():
+        dq = collections.deque()
+        for i, t in enumerate(toks):
+            rank = i + 1
+            if czech.is_rare_and_short(t, rank) or len(set(t)) == 1 or "," in t or '"' in t:
+                continue
+            dq.append(t)
+        freq_lists[name] = dq
+
+    def first_uniq_token(freq_list, minimum_rank, rank):
+        if len(freq_list) == 0:
+            return None
+        first = freq_list.popleft()
+        if first in minimum_rank or czech.is_brutal_better(first, rank, minimum_rank):
+            return first_uniq_token(freq_list, minimum_rank, rank)
+        return first
+
+    result = {name: [] for name in freq_lists}
+    minimum_rank = {}
+    rank = 0
+    is_next = True
+    while is_next:
+        rank += 1
+        is_next = False
+        for name in sorted(freq_lists):
+            token = first_uniq_token(freq_lists[name], minimum_rank, rank)
+            if token:
+                minimum_rank[token] = rank
+                result[name].append(token)
+                is_next = True
+    return result
+
+
+def test_filter_matches_zxcvbn_czech_reference():
+    import random
+    import sys
+    sys.setrecursionlimit(20000)
+    rng = random.Random(1)
+    for _ in range(100):
+        lists = {}
+        for name in ("a", "b", "c"):
+            toks = []
+            for _ in range(rng.randint(0, 1500)):
+                t = "".join(rng.choice("abcde") for _ in range(rng.randint(1, 7)))
+                if t not in toks:
+                    toks.append(t)
+            lists[name] = toks
+        assert czech.filter_lists(lists) == _reference_filter(lists)

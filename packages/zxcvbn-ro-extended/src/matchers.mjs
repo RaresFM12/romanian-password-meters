@@ -9,7 +9,6 @@ function foldChar(ch) {
 export function makeFoldedMatcher(foldedBest) {
   class Matching {
     match({ password }) {
-      const cps = [...password];
       const { folded, starts, n } = foldWithMap(password);
       const m = folded.length;
       const matches = [];
@@ -21,7 +20,7 @@ export function makeFoldedMatcher(foldedBest) {
             const j = b < m ? starts[b] - 1 : n - 1;
             matches.push({
               pattern: 'roFolded', i, j,
-              token: cps.slice(i, j + 1).join(''),
+              token: password.slice(i, j + 1),
               matchedWord: sub, rank: foldedBest.get(sub),
               dictionaryName: 'ro-folded', reversed: false, l33t: false,
             });
@@ -42,10 +41,15 @@ export function makeFoldedMatcher(foldedBest) {
   return { Matching, scoring, feedback };
 }
 
+// reads sh as ș and tz as ț, only when the result is a Romanian word
 export function makeDigraphMatcher(foldedBest) {
   class Matching {
     match({ password }) {
       const chars = [...password];
+      const offset = [];
+      let pos = 0;
+      for (const c of chars) { offset.push(pos); pos += c.length; }
+      offset.push(pos);
       const low = chars.map((c) => c.toLowerCase());
       const matches = [];
       const n = chars.length;
@@ -59,8 +63,8 @@ export function makeDigraphMatcher(foldedBest) {
           else { rewritten += foldChar(low[k]); k += 1; }
           if (hadDigraph && rewritten.length >= MIN_LEN && foldedBest.has(rewritten)) {
             matches.push({
-              pattern: 'roDigraph', i, j: k - 1,
-              token: chars.slice(i, k).join(''),
+              pattern: 'roDigraph', i: offset[i], j: offset[k] - 1,
+              token: password.slice(offset[i], offset[k]),
               matchedWord: rewritten, rank: foldedBest.get(rewritten),
               dictionaryName: 'ro-digraph', reversed: false, l33t: false,
             });

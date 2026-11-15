@@ -24,7 +24,7 @@ export function hasDiacritic(s) {
 
 export function toPre1993(s) {
   const nfc = s.normalize('NFC');
-  const ph = '';
+  const ph = '\ue000';
   const protectedStr = nfc.split(ROMAN_STEM).join(ph);
   const converted = protectedStr.replace(/â/g, 'î').replace(/Â/g, 'Î');
   return converted.split(ph).join(ROMAN_STEM);
@@ -32,16 +32,17 @@ export function toPre1993(s) {
 
 const COMBINING = /\p{Mn}|\p{Mc}/u;
 
+// positions are UTF-16 indices, like zxcvbn's i and j
 export function foldWithMap(password) {
-  const cps = [...password];
   const groups = [];
-  for (let idx = 0; idx < cps.length; idx += 1) {
-    const ch = cps[idx];
+  let pos = 0;
+  for (const ch of password) {
     if (COMBINING.test(ch) && groups.length) {
       groups[groups.length - 1].src += ch;
     } else {
-      groups.push({ src: ch, start: idx });
+      groups.push({ src: ch, start: pos });
     }
+    pos += ch.length;
   }
   let folded = '';
   const starts = [];
@@ -49,10 +50,13 @@ export function foldWithMap(password) {
     const composed = g.src.normalize('NFC');
     let f = '';
     for (const c of composed) f += FOLD[c] ?? c;
-    folded += f.toLowerCase();
-    starts.push(g.start);
+    const low = f.toLowerCase();
+    for (let k = 0; k < low.length; k += 1) {
+      folded += low[k];
+      starts.push(g.start);
+    }
   }
-  return { folded, starts, n: cps.length };
+  return { folded, starts, n: password.length };
 }
 
 const ONE_UPPER = /[A-Z]/;
@@ -71,7 +75,7 @@ function nCk(n, k) {
 }
 
 export function uppercaseVariations(token) {
-  const word = token.replace(/[^A-Za-z]/g, '');
+  const word = fold(token).replace(/[^A-Za-z]/g, '');
   if (word === '' || ALL_LOWER.test(word) || word.toLowerCase() === word) return 1;
   if (START_UPPER.test(word) || END_UPPER.test(word) || ALL_UPPER.test(word)) return 2;
   const u = [...word].filter((c) => ONE_UPPER.test(c)).length;

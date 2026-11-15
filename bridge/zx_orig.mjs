@@ -1,5 +1,5 @@
 import readline from 'node:readline';
-import zp from 'zxcvbn';
+import zp from './vendor/zxcvbn-orig/lib/main.js';
 import { factorial } from './meters.mjs';
 
 const zxcvbn = zp.default || zp;
@@ -35,7 +35,11 @@ const chunks = [];
 for await (const line of rl) {
   if (!line.trim()) continue;
   const { id, password } = JSON.parse(line);
-  chunks.push(JSON.stringify(toRecord(id, zxcvbn(password))));
+  const t0 = performance.now();
+  const result = zxcvbn(password);
+  const rec = toRecord(id, result);
+  rec.ms = performance.now() - t0;
+  chunks.push(JSON.stringify(rec));
   if (chunks.length >= 1000) {
     process.stdout.write(chunks.join('\n') + '\n');
     chunks.length = 0;

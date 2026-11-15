@@ -5,7 +5,7 @@ import json
 import unicodedata
 from . import ro_handbuilt as hb
 from .config import REPO_ROOT
-from .normalize import fold, nfc
+from .normalize import fold, nfc, to_comma
 
 SIRUTA_TYPES = {"judetul", "municipiul", "orasul", "oras", "comuna", "sat",
                 "satul", "regiunea", "sectorul"}
@@ -36,15 +36,16 @@ def _read_src(name):
     return [l.rstrip("\n") for l in open(path, encoding="utf-8")]
 
 
-def write_meter_tsv(name, ranked, inputs):
+def write_meter_tsv(name, rows, inputs):
+    rows = sorted(rows, key=lambda r: r[1])
     METER.mkdir(parents=True, exist_ok=True)
     with open(METER / (name + ".tsv"), "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f, delimiter="\t")
         w.writerow(["item", "rank", "freq"])
-        for i, (item, freq) in enumerate(ranked, start=1):
-            w.writerow([item, i, freq])
+        for item, rank, freq in rows:
+            w.writerow([item, rank, freq])
     MANIFEST[name] = inputs
-    return len(ranked)
+    return len(rows)
 
 
 def build_common_clean():
@@ -60,34 +61,25 @@ def build_common_clean():
         for variant in dict.fromkeys([w, _strip_format(w)]):
             if variant and variant not in seen:
                 seen.add(variant)
-                rows.append((variant, best + 1))
-    rows.sort(key=lambda r: r[1])
+                rows.append((variant, best + 1, i + 1))
     return write_meter_tsv("ro_common_clean", rows, [LANG_RO + ":commonWords-ro"])
 
 
 def build_names_ext():
     names = _read_src("firstnames")
-    rows = [(nfc(w), i + 1) for i, w in enumerate(names)]
-    seen = {w for w, _ in rows}
-    nxt = len(rows) + 1
-    for d in hb.DIMINUTIVES:
-        d = nfc(d)
-        if d not in seen:
-            seen.add(d)
-            rows.append((d, nxt))
-            nxt += 1
-    return write_meter_tsv("ro_names_ext", rows,
+    items = [nfc(w) for w in names] + [nfc(d) for d in hb.DIMINUTIVES]
+    return write_meter_tsv("ro_names_ext", _ranked(items),
                            [LANG_RO + ":firstnames-ro", HB + ":DIMINUTIVES"])
 
 
 def _ranked(items):
     out = []
     seen = set()
-    for i, w in enumerate(items):
+    for w in items:
         w = nfc(w)
         if w and w not in seen:
             seen.add(w)
-            out.append((w, i + 1))
+            out.append((w, len(out) + 1, len(out) + 1))
     return out
 
 
@@ -108,7 +100,7 @@ def _is_name(w):
 
 
 def build_places():
-    items = [name for name, _ in hb.COUNTIES] + [code for _, code in hb.COUNTIES]
+    items = [name for name, _ in hb.COUNTIES]
     inputs = [HB + ":COUNTIES"]
     siruta = REPO_ROOT / "data/raw/siruta/siruta.csv"
     if siruta.exists():
@@ -125,11 +117,11 @@ def build_places():
             if not words:
                 continue
             joined = "".join(words)
-            if _is_name(joined):
-                items.append(joined)
-            for w in words:
-                if _is_name(w):
-                    items.append(w)
+            for cand in [joined] + words:
+                if _is_name(cand):
+                    # SIRUTA is cp1250 (cedilla only): correct spelling first
+                    items.append(to_comma(cand))
+                    items.append(cand)
         inputs.append("data/raw/siruta/siruta.csv")
     return write_meter_tsv("ro_places", _ranked(items), inputs)
 
@@ -141,7 +133,8 @@ def write_audit():
     pairs = [w for w in words
              if ("ş" in w or "ţ" in w) and w.translate(ced2comma) in present]
     fmt = [w for w in words if any(unicodedata.category(c) == "Cf" for c in w)]
-    rank = {w: i for i, w in enumerate(words)}
+    # zxcvbn's rank of a word is its position in the list + 1
+    rank = {w: i + 1 for i, w in enumerate(words)}
     audit = {
         "entries": len(words),
         "cedilla_comma_pairs": len(pairs),

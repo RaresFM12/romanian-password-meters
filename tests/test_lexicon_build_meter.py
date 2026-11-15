@@ -1,5 +1,6 @@
 import csv
 import json
+import shutil
 
 import pytest
 
@@ -11,11 +12,17 @@ pytestmark = pytest.mark.skipif(
     reason="language-ro not exported (run bridge/export_ro.mjs data/lexicon/meter)")
 
 @pytest.fixture(scope="module")
-def built():
+def built(tmp_path_factory):
+    # build into a copy, so the tests never rewrite the real lists and tables
+    tmp = tmp_path_factory.mktemp("meter")
+    shutil.copytree(mb.METER, tmp / "meter")
+    old = mb.METER, mb.TABLES
+    mb.METER, mb.TABLES = tmp / "meter", tmp / "tables"
     sizes = mb.build_all()
     audit = mb.write_audit()
     mb.write_overlap()
-    return sizes, audit
+    yield sizes, audit
+    mb.METER, mb.TABLES = old
 
 def test_audit_matches_plan(built):
     _, audit = built
@@ -24,7 +31,7 @@ def test_audit_matches_plan(built):
     assert audit["format_char_entries"] == 317
     assert audit["unique_after_fold"] == 40907
     assert (audit["rank_vacanta_cedilla"], audit["rank_vacanta_comma"],
-            audit["rank_vacanta_ascii"]) == (2896, 7691, 11901)
+            audit["rank_vacanta_ascii"]) == (2897, 7692, 11902)
 
 def test_common_clean_keeps_every_spelling(built):
     with (mb.METER / "ro_common_clean.tsv").open(encoding="utf-8") as fh:

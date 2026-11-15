@@ -1,4 +1,3 @@
-// Unit tests for the Romanian custom matchers (guide C10). Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeFoldedMatcher, makeDigraphMatcher } from '../src/matchers.mjs';
@@ -26,7 +25,7 @@ test('roFolded matches the decomposed (NFD) form as the same word', () => {
   const hit = m.find((x) => x.matchedWord === 'fetita');
   assert.ok(hit, 'NFD form should match fetita');
   assert.equal(hit.i, 0);
-  assert.equal(hit.j, nfd.length - 1); // spans the whole decomposed string
+  assert.equal(hit.j, nfd.length - 1);
 });
 
 test('roFolded matches the pre-1993 spelling piine', () => {
@@ -40,7 +39,6 @@ test('roDigraph matches sh/tz spellings', () => {
 });
 
 test('roDigraph does NOT split an English word like ashley', () => {
-  // 'asley' is not a Romanian entry, so no digraph match is produced
   assert.equal(digraph.match({ password: 'ashley' }).length, 0);
 });
 
@@ -49,4 +47,22 @@ test('foldWithMap keeps index alignment for composed input', () => {
   assert.equal(f, 'vacanta');
   assert.deepEqual(starts, [0, 1, 2, 3, 4, 5, 6]);
   assert.equal(n, 7);
+});
+
+test('indices are UTF-16 positions, also after an emoji', () => {
+  const m = folded.match({ password: '😀fetita' });
+  const hit = m.find((x) => x.matchedWord === 'fetita');
+  assert.equal(hit.i, 2);
+  assert.equal(hit.j, 7);
+  assert.equal(hit.token, 'fetita');
+  const d = digraph.match({ password: '😀fetitza' }).find((x) => x.matchedWord === 'fetita');
+  assert.equal(d.i, 2);
+  assert.equal(d.token, 'fetitza');
+});
+
+test('a capital with a diacritic counts as a capital, in NFC and NFD', async () => {
+  const { uppercaseVariations } = await import('../src/fold.mjs');
+  assert.equal(uppercaseVariations('Ștefan'), 2);
+  assert.equal(uppercaseVariations('Ștefan'.normalize('NFD')), 2);
+  assert.equal(uppercaseVariations('ștefan'), 1);
 });
