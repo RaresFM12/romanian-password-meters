@@ -76,3 +76,48 @@ def test_floor_attribution():
 
     out = list(mx.floor_attribution([1e5, 1e9]))
     assert out == ["floor", "knowledge"]
+
+
+# wCorr R/wrank.R, written out literally
+def _wcorr_wrank(x, w):
+    order = np.argsort(x, kind="mergesort")
+    xp = np.asarray(x, float)[order]
+    wp = np.asarray(w, float)[order]
+    rnk = np.empty(len(x))
+    t1 = 0.0
+    t2 = 0.0
+    n = 0
+    i = 0
+    while i < len(x) - 1:
+        t2 += wp[i]
+        n += 1
+        if xp[i + 1] != xp[i]:
+            rnki = t1 + (1 + (t2 - 1) / 2)
+            for ii in range(1, n + 1):
+                rnk[i - ii + 1] = rnki
+            t1 += t2
+            t2 = 0.0
+            n = 0
+        i += 1
+    t2 += wp[i]
+    n += 1
+    rnki = t1 + (1 + (t2 - 1) / 2)
+    for ii in range(1, n + 1):
+        rnk[i - ii + 1] = rnki
+    out = np.empty(len(x))
+    out[order] = rnk
+    return out
+
+
+def test_weighted_spearman_equals_wcorr_formula():
+    from ropw.metrics import _weighted_pearson, _weighted_rank, weighted_spearman
+    rng = np.random.default_rng(3)
+    for _ in range(50):
+        n = 40
+        x = rng.integers(0, 15, n).astype(float)
+        y = rng.integers(0, 15, n).astype(float)
+        w = rng.pareto(1.5, n) + 0.1
+        ours = weighted_spearman(x, y, w)
+        ref = _weighted_pearson(_wcorr_wrank(x, w), _wcorr_wrank(y, w), w)
+        assert abs(ours - ref) < 1e-12
+        assert np.allclose(_wcorr_wrank(x, w) - _weighted_rank(x, w), 0.5)

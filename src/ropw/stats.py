@@ -36,11 +36,16 @@ def wilson_interval(k, n, alpha=0.05):
 
 
 def cmh_test(tables):
-    st = StratifiedTable([np.asarray(t, dtype=float) for t in tables])
+    tabs = [np.asarray(t, dtype=float) for t in tables]
+    st = StratifiedTable(tabs)
     res = st.test_null_odds(correction=False)
     orr = float(st.oddsratio_pooled)
     p_two = float(res.pvalue)
-    if orr > 1:
+    diff = 0.0
+    for t in tabs:
+        n = t.sum()
+        diff += t[0, 0] - t[0].sum() * t[:, 0].sum() / n
+    if diff > 0:
         p_greater = p_two / 2
     else:
         p_greater = 1 - p_two / 2
@@ -50,6 +55,11 @@ def cmh_test(tables):
         "oddsratio_pooled": orr,
         "p_one_sided_greater": float(p_greater),
     }
+
+
+def clopper_pearson(k, n, alpha=0.05):
+    lo, hi = proportion_confint(k, n, alpha=alpha, method="beta")
+    return float(lo), float(hi)
 
 
 def binom_test(k, n, p, alternative="two-sided"):
