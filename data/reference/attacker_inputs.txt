@@ -1,0 +1,11 @@
+data/lexicon/generator/en_words.tsv
+data/lexicon/generator/en_names.tsv
+data/lexicon/generator/en_phrases.tsv
+data/lexicon/generator/ro_words.tsv
+data/lexicon/generator/ro_inflected.tsv
+data/lexicon/generator/ro_names.tsv
+data/lexicon/generator/ro_places.tsv
+data/lexicon/generator/ro_cultural.tsv
+data/lexicon/generator/ro_phrases.tsv
+data/breach/rockyou_attacker.txt
+data/breach/ro_attacker_share.txt

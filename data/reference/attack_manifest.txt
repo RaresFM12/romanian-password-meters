@@ -1,0 +1,19 @@
+date: 2026-11-15T20:36:53Z
+run budget: 1000000000
+hashcat: v8.0.0
+john: John the Ripper 1.9.0-jumbo-1 [darwin25.6.0 64-bit arm ASIMD AC]
+pcfg_cracker: b04bbda
+dc23b16ab3403a029cbbb4289ff6dfba8d4c31c34d2470e4f6690821b1172cd5  /opt/homebrew/share/hashcat/rules/best66.rule
+2d266fab3ea3ce2671e8c3843d342efff552be286137c331628875a8bb018bc0  data/reference/rules/OneRuleToRuleThemAll.rule
+ab5fea7fc8392d47704b0dac64f4a2051774f5eb59cee16b9e51a9f8a0bfbd29  data/reference/wordlists/all.txt
+270ae15466efede80a222596a05937a0f09be562fcdac919600fe95dade77101  data/reference/wordlists/all_top.txt
+59af3e9ff39cff80e7463da5bddb3850ff5b903e7a14db4b991d53bb2fcf5ede  data/reference/wordlists/all_top_space.txt
+dcae21dcf9958a1221da975ad96c1062705bc45f64be359fe5ac178a5ffbdab6  data/reference/wordlists/en.txt
+404fe8cf53fa753cdc048790731d0eee83176416c828602c1085e8bc1a926700  data/reference/wordlists/prince_all.txt
+90bc1d5d4cf19a915379d2ba9bc2d23bdf2d0dc6635cb8de20df121fa4388faa  data/reference/wordlists/ro.txt
+7e88c15f23884bd4065030b06eb6a0fe7cc70385f2eee191f4035cac39fdf01b  data/reference/wordlists/ro_novar.txt
+13ef81bbd8bf605ff17fab254e2d5116fb0d4d1b24066c442b5f20af6a6fc932  data/reference/wordlists/ro_novar_top.txt
+7c3180b45f04694810560db76ad9a0223bfc9760d0e3c1cbca1e41b246acca4f  data/reference/wordlists/ro_novar_top_space.txt
+db51ef874e74bde0eade964d8e9f1b50bba1f233b9f08ac05b91ccf77e4c55b7  data/reference/wordlists/ro_top.txt
+17dfbc7294ec1a3e0399969b34168a599e3eac64c048d4fef256bc88fc1db9ba  data/reference/wordlists/ro_top_space.txt
+e7864198c4c729a5a0088678017d7173e05c1e8ab2abf1f22d005ea9ce300592  data/breach/pcfg_training.txt

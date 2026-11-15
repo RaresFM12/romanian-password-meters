@@ -1,0 +1,74 @@
+[
+  {
+    "attacker": "A-EN",
+    "run": "small",
+    "budget": 100000000,
+    "found": "data/reference/found/A-EN.small.found"
+  },
+  {
+    "attacker": "A-EN",
+    "run": "full",
+    "budget": 1000000000,
+    "found": "data/reference/found/A-EN.full.found"
+  },
+  {
+    "attacker": "A-RO",
+    "run": "small",
+    "budget": 100000000,
+    "found": "data/reference/found/A-RO.small.found"
+  },
+  {
+    "attacker": "A-RO",
+    "run": "full",
+    "budget": 1000000000,
+    "found": "data/reference/found/A-RO.full.found"
+  },
+  {
+    "attacker": "A-ALL",
+    "run": "small",
+    "budget": 100000000,
+    "found": "data/reference/found/A-ALL.small.found"
+  },
+  {
+    "attacker": "A-ALL",
+    "run": "full",
+    "budget": 1000000000,
+    "found": "data/reference/found/A-ALL.full.found"
+  },
+  {
+    "attacker": "A-JTR",
+    "run": "small",
+    "budget": 100000000,
+    "found": "data/reference/found/A-JTR.small.found"
+  },
+  {
+    "attacker": "A-JTR",
+    "run": "full",
+    "budget": 1000000000,
+    "found": "data/reference/found/A-JTR.full.found"
+  },
+  {
+    "attacker": "A-PCFG",
+    "run": "small",
+    "budget": 100000000,
+    "found": "data/reference/found/A-PCFG.small.found"
+  },
+  {
+    "attacker": "A-PCFG",
+    "run": "full",
+    "budget": 1000000000,
+    "found": "data/reference/found/A-PCFG.full.found"
+  },
+  {
+    "attacker": "A-RO-NOVAR",
+    "run": "small",
+    "budget": 100000000,
+    "found": "data/reference/found/A-RO-NOVAR.small.found"
+  },
+  {
+    "attacker": "A-RO-NOVAR",
+    "run": "full",
+    "budget": 1000000000,
+    "found": "data/reference/found/A-RO-NOVAR.full.found"
+  }
+]
