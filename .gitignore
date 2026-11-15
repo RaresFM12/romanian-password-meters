@@ -1,37 +1,43 @@
-# macOS / editors
 .DS_Store
 .vscode/
+.pytest_cache/
 .idea/
 
-# Python / Node
 __pycache__/
 *.pyc
 .venv/
 venv/
 node_modules/
 
-# Copyrighted papers
 *.pdf
 *.pages
 
-# Password datasets and anything derived from a breach: NEVER commit
+# kept locally, not published
+report/
+docs/deviations.md
+
+# breach-derived data: never commit
 data/raw/
 data/breach/
 data/reference/*real*
 results/private/
 
-# Regenerable data (rebuild: make data + make generate). manifest.json is kept.
 data/lexicon/generator/*.tsv
 data/lexicon/meter/*.tsv
 data/lexicon/meter/*.txt
-data/synthetic/*.csv
 
 tmp/
 *.egg-info/
 
-# Regenerable results (rebuild: make all). Final results committed by the student if wanted.
-results/tables/*.csv
-results/figures/*.png
 results/figures/*.pdf
 results/meters/
-results/run_manifest.json
+
+data/reference/wordlists/
+data/reference/guess_numbers.csv
+data/reference/reference_gstar.csv
+bridge/vendor/core-D*/
+bridge/vendor/zxcvbn-orig/
+data/synthetic/targets_all.txt
+data/reference/found/
+data/reference/probes.csv
+data/reference/rules/
