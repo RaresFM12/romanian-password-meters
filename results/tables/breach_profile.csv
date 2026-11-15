@@ -1,0 +1,6 @@
+metric,value
+passwords,37772
+occurrences,71124
+mean_length,10.35
+class_counts,"{'lower': 36015, 'symbol': 1860, 'digit': 10976, 'upper': 3009}"
+with_diacritics,53

@@ -1,0 +1,9 @@
+hypothesis,tests,decisions,verdict
+H1,T1,pass,supported
+H2a,T2,undecided,undecided
+H2b,T3 T4,undecided undecided,undecided
+H3a,T5,pass,supported
+H3b,T6 T7,fail pass,not supported
+H3c,T8,fail,not supported
+H5a,T9 T10 T11,pass pass pass,supported
+H5b,T12,pass,supported

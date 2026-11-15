@@ -1,0 +1,4 @@
+check,value,passed
+M-ZX-EN rho >= 0.5 on EN-word-num,0.6752166987125618,True
+M-ZX-EN rho >= 0.5 on EN-name-num,0.6255126079499503,True
+M-ZX-EN rho >= 0.5 on EN-phrase,0.36923795496308326,False

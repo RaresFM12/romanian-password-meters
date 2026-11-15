@@ -1,0 +1,5 @@
+check,passed,detail
+random_never_found,True,0 RANDOM passwords were found
+probes_found_at_position,True,0 of 300 probes off
+small_full_agree,True,0 disagreements up to 1e+08
+attacker_diversity,True,top attacker gives 47% of minima

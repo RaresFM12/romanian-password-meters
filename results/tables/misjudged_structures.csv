@@ -1,0 +1,21 @@
+structure,n,mean_error,example,ref_level,a_ro_guess_number,M-POLICY,M-BLOCK,M-ZX-ORIG,M-ZX-EN,M-ZX-RO-PKG,M-ZX-RO-CZ,M-ZX-RO+
+RO-leet | leet | initial_upper | none,19,2.263157894736842,D3Un,3,,0,4,1,1,1,1,1
+RO-name-num | none | all_upper | year,7,2.0,RICA1975,3,,0,4,1,1,1,1,1
+RO-leet | leet | all_upper | none,4,2.0,$ERAFIN4,3,,4,4,1,1,1,1,1
+EN-name-num | none | all_upper | year,7,1.8571428571428572,TAMARA1975,3,,0,4,1,1,1,1,1
+RO-name-num | none | initial_upper | year,40,1.825,Matei1998,2,,4,4,2,2,1,1,1
+RO-place | none | all_upper | digits+symbol,4,1.75,CIUMANI@,3,,0,4,2,2,2,1,1
+RO-name-num | ascii | lower | year,7,1.7142857142857142,venetiana2021,3,,0,4,3,3,3,3,3
+EN-name-num | none | initial_upper | year,43,1.6744186046511629,Nancy1998,2,,4,4,1,1,1,1,1
+RO-leet | leet | lower | none,21,1.6666666666666667,$ima1mul73,3,,4,4,3,3,2,2,2
+RO-word-year | none | all_upper | year,15,1.6666666666666667,INGER1974,3,,0,4,1,1,1,1,1
+RO-cultural | none | all_upper | digits,5,1.6,CARMEN8426,3,,0,4,2,2,2,2,2
+RO-word-year | correct | initial_upper | year,5,1.6,Această2004,3,,4,4,3,3,1,1,1
+RO-name-num | none | lower | year,50,1.54,lidia1971,2,,0,4,1,1,1,1,1
+RO-word-year | none | initial_upper | year,54,1.5185185185185186,Full2003,3,,4,4,1,1,1,1,1
+RO-word-year | correct | lower | year,4,1.5,cauză1965,3,,0,4,2,2,1,1,1
+EN-word-num | none | initial_upper | digits,89,1.4831460674157304,Hospice0079,3,,4,4,3,3,3,3,3
+RO-word-year | none | lower | year,69,1.4782608695652173,despre2016,3,,0,4,3,3,1,1,1
+RO-phrase | ascii | lower | none,14,1.4285714285714286,peluna,1,15376068.0,0,4,1,1,1,1,1
+RO-name-num | none | all_upper | digits,7,1.4285714285714286,OVIDIU3825,3,,0,4,3,3,2,2,2
+RO-word-num | none | initial_upper | digits,70,1.4142857142857144,Bobul0079,3,,4,4,3,3,3,3,3
